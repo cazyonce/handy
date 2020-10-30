@@ -1,0 +1,37 @@
+#########################数据库配置#########################
+#server.port=443
+#server.ssl.key-store=classpath:ssl.pfx
+#server.ssl.key-store-password=m1wsHgnn
+#server.ssl.key-store-type=PKCS12
+logging.level.priv.lyh.amass =debug
+server.address = 0.0.0.0
+
+spring.datasource.url=jdbc:mysql://192.168.0.101:3306/amass?useUnicode=true&characterEncoding=UTF-8
+spring.datasource.username=root
+spring.datasource.password=123456
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+spring.jpa.properties.hibernate.hbm2ddl.auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL5InnoDBDialect
+spring.jpa.show-sql=true
+# 这个是在初始化数据库时运行schema.sql和data.sql中的配置，触发时机是每次开启都会执行，所以要只在第一次运行该项目时才需要开启，也可以使用关闭（never）
+spring.datasource.initialization-mode=always
+# sql执行错误继续运行，这个配置就是解决以上问题，不过注意sql中若存在update语句，数据都会还原至初始化状态，注意这个细节
+spring.datasource.continue-on-error=true
+# 关闭模板缓存
+spring.thymeleaf.cache=false
+ 
+# 启动响应压缩
+server.compression.enabled=true
+server.compression.mime-types=application/json,application/xml,text/html,text/xml,text/plain,image/png,image/jpeg,image/jpg,application/javascript,text/css
+#默认就是2048 byte
+server.compression.min-response-size=1024
+
+spring.data.elasticsearch.local = true
+spring.data.elasticsearch.repositories.enabled = true
+spring.data.elasticsearch.cluster-name= es-amass
+spring.data.elasticsearch.cluster-nodes= 127.0.0.1:9300
+
+#覆盖默认配置，所以需要将默认的也加上否则static、public等这些路径将不能被当作静态资源路径
+#file:表示是一个具体的硬盘路径，其他的使用classpath指的是系统环境变量
+spring.resources.static-locations=classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/,file:${amass.system.user-avatar-dir}

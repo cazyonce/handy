@@ -1,0 +1,33 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>handy</groupId>
+	<artifactId>handy</artifactId>
+	<version>0.0.1</version>
+
+	<name>handy</name>
+	<packaging>pom</packaging>
+	<description>handy</description>
+	
+	<modules>
+		<module>handy-sql</module>
+	</modules>
+	
+	<repositories>
+		<repository>
+			<id>central</id>
+			<name>central repository</name>
+			<url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+			<layout>default</layout>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+			</snapshots>
+		</repository>
+	</repositories>
+</project>
