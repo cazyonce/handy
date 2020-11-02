@@ -15,6 +15,7 @@ public class AccessPermissionsInterceptor extends HandlerInterceptorAdapter {
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
+		
 		response.setContentType("text/html;charset=UTF-8");
 		String path = request.getRequestURI();
 		System.out.println(path + "---" + request.getMethod() + "---" + request.getRemoteAddr() + "---"
@@ -27,5 +28,11 @@ public class AccessPermissionsInterceptor extends HandlerInterceptorAdapter {
 
 
 		return true;
+	}
+	
+	public static void main(String[] args) {
+		String str = "";
+		
+		
 	}
 }
