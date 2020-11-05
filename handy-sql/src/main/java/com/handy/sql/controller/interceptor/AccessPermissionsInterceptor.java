@@ -1,5 +1,7 @@
 package com.handy.sql.controller.interceptor;
 
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -12,6 +14,7 @@ import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 @Component
 public class AccessPermissionsInterceptor extends HandlerInterceptorAdapter {
 
+//	public static Map<String, Object>
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
@@ -20,7 +23,7 @@ public class AccessPermissionsInterceptor extends HandlerInterceptorAdapter {
 		String path = request.getRequestURI();
 		System.out.println(path + "---" + request.getMethod() + "---" + request.getRemoteAddr() + "---"
 				+ request.getSession().getId());
-
+		
 		if (!(handler instanceof HandlerMethod)) {
 			System.out.println("!(handler instanceof HandlerMethod)");
 			return false;

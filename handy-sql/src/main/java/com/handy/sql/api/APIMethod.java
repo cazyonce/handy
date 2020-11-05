@@ -1,9 +1,9 @@
 package com.handy.sql.api;
 
 
-import com.handy.sql.api.request.mapping.RequestMapping;
+import com.handy.sql.api.request.mapping.APIRequestMapping;
 
 public class APIMethod {
 
-	private RequestMapping mapping;
+	private APIRequestMapping mapping;
 }

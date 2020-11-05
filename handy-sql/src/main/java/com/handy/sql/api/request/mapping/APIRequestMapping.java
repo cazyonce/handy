@@ -1,12 +1,16 @@
 package com.handy.sql.api.request.mapping;
 
+import javax.validation.constraints.NotBlank;
 import org.springframework.web.bind.annotation.RequestMethod;
+import lombok.Getter;
+import lombok.Setter;
 
-public class RequestMapping {
+@Getter
+@Setter
+public class APIRequestMapping {
 
-	String name;
-	
-	String[] value;
+	@NotBlank
+	private String name;
 	
 	String[] path;
 	
@@ -14,9 +18,11 @@ public class RequestMapping {
 	
 	String[] params;
 	
+	/** 限定允许或拒绝请求头 **/
 	String[] headers;
 	
 	String[] consume;
 	
 	String[] produces;
+	
 }

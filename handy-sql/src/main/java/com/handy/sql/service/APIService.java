@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
+import com.handy.sql.api.request.mapping.APIRequestMapping;
 import com.handy.sql.config.APIControlRequestMappingHandlerMapping;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -29,17 +30,17 @@ public class APIService {
 	@Autowired
 	private RequestMappingHandlerMapping requestMappingHandlerMapping;
 	
-	public void addAPI(Map<String, String> map) throws Exception {
+	public void addAPI(boolean root, APIRequestMapping mapping) throws Exception {
 		if (!(requestMappingHandlerMapping instanceof APIControlRequestMappingHandlerMapping)) {
 			throw new Exception("错误的请求处理映射对象");
 		}
 		APIControlRequestMappingHandlerMapping apiControlMapping = (APIControlRequestMappingHandlerMapping) requestMappingHandlerMapping;
-		Object obj = createClass(map.get("path")).newInstance();
+		Object obj = createClass(root, mapping).newInstance();
 		Class classz =obj.getClass();
 		apiControlMapping.registerMapping(classz.getMethod("test"), obj);
 	}
 
-	private Class createClass(String path) throws Exception {
+	private Class createClass(boolean root, APIRequestMapping mapping) throws Exception {
 		ClassPool pool = ClassPool.getDefault();
 
 		CtClass cc = pool.makeClass("test.Person");
@@ -49,27 +50,68 @@ public class APIService {
 
 		AnnotationsAttribute bodyAttr = new AnnotationsAttribute(constPool, AnnotationsAttribute.visibleTag);
 		Annotation bodyAnnot = new Annotation(RequestMapping.class.getTypeName(), constPool);
-		ArrayMemberValue arrayMemberValue = new ArrayMemberValue(constPool);
-		arrayMemberValue.setValue(new StringMemberValue[] { new StringMemberValue(path, constPool) });
-		bodyAnnot.addMemberValue("value", arrayMemberValue);
+		
+		// 添加controller头部的request mapping注解值
+		if (mapping.getPath() != null) {
+			ArrayMemberValue arrayMemberValue = new ArrayMemberValue(constPool);
+			for (String path : mapping.getPath()) {
+				arrayMemberValue.setValue(new StringMemberValue[] { new StringMemberValue(path, constPool) });
+			}
+			bodyAnnot.addMemberValue("path", arrayMemberValue);
+		}
+		
 		bodyAttr.addAnnotation(bodyAnnot);
 		ccFile.addAttribute(bodyAttr);
 
+		
 		bodyAttr = new AnnotationsAttribute(constPool, AnnotationsAttribute.visibleTag);
 		bodyAnnot = new Annotation(RestController.class.getTypeName(), constPool);
 		bodyAttr.addAnnotation(bodyAnnot);
 		ccFile.addAttribute(bodyAttr);
 
-		AnnotationsAttribute methodAttr = new AnnotationsAttribute(constPool, AnnotationsAttribute.visibleTag);
-		Annotation methodAnnot = new Annotation(GetMapping.class.getTypeName(), constPool);
-		methodAttr.addAnnotation(methodAnnot);
-
-		CtMethod ctMethod = new CtMethod(pool.get(String.class.getTypeName()), "test", new CtClass[] {}, cc);
-		ctMethod.setModifiers(Modifier.PUBLIC);
-		ctMethod.setBody("{System.out.println(\"getName\"); return \"This is test0.0...\";}");
-		cc.addMethod(ctMethod);
-		ctMethod.getMethodInfo().addAttribute(methodAttr);
+//		AnnotationsAttribute methodAttr = new AnnotationsAttribute(constPool, AnnotationsAttribute.visibleTag);
+//		Annotation methodAnnot = new Annotation(GetMapping.class.getTypeName(), constPool);
+//		methodAttr.addAnnotation(methodAnnot);
+//
+//		CtMethod ctMethod = new CtMethod(pool.get(String.class.getTypeName()), "test", new CtClass[] {}, cc);
+//		ctMethod.setModifiers(Modifier.PUBLIC);
+//		ctMethod.setBody("{System.out.println(\"getName\"); return \"This is test0.0...\";}");
+//		cc.addMethod(ctMethod);
+//		ctMethod.getMethodInfo().addAttribute(methodAttr);
 		
 		return cc.toClass();
 	}
+//	private Class createClass(String path) throws Exception {
+//		ClassPool pool = ClassPool.getDefault();
+//		
+//		CtClass cc = pool.makeClass("test.Person");
+//		
+//		ClassFile ccFile = cc.getClassFile();
+//		ConstPool constPool = ccFile.getConstPool();
+//		
+//		AnnotationsAttribute bodyAttr = new AnnotationsAttribute(constPool, AnnotationsAttribute.visibleTag);
+//		Annotation bodyAnnot = new Annotation(RequestMapping.class.getTypeName(), constPool);
+//		ArrayMemberValue arrayMemberValue = new ArrayMemberValue(constPool);
+//		arrayMemberValue.setValue(new StringMemberValue[] { new StringMemberValue(path, constPool) });
+//		bodyAnnot.addMemberValue("value", arrayMemberValue);
+//		bodyAttr.addAnnotation(bodyAnnot);
+//		ccFile.addAttribute(bodyAttr);
+//		
+//		bodyAttr = new AnnotationsAttribute(constPool, AnnotationsAttribute.visibleTag);
+//		bodyAnnot = new Annotation(RestController.class.getTypeName(), constPool);
+//		bodyAttr.addAnnotation(bodyAnnot);
+//		ccFile.addAttribute(bodyAttr);
+//		
+//		AnnotationsAttribute methodAttr = new AnnotationsAttribute(constPool, AnnotationsAttribute.visibleTag);
+//		Annotation methodAnnot = new Annotation(GetMapping.class.getTypeName(), constPool);
+//		methodAttr.addAnnotation(methodAnnot);
+//		
+//		CtMethod ctMethod = new CtMethod(pool.get(String.class.getTypeName()), "test", new CtClass[] {}, cc);
+//		ctMethod.setModifiers(Modifier.PUBLIC);
+//		ctMethod.setBody("{System.out.println(\"getName\"); return \"This is test0.0...\";}");
+//		cc.addMethod(ctMethod);
+//		ctMethod.getMethodInfo().addAttribute(methodAttr);
+//		
+//		return cc.toClass();
+//	}
 }
