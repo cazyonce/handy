@@ -1,9 +1,16 @@
 package com.handy.sql.netty;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.time.LocalDateTime;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.handy.sql.netty.http.api.API;
+import com.handy.sql.netty.http.session.HttpSession;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -16,14 +23,14 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpMessage;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 import io.netty.util.CharsetUtil;
 
 public class Server {
@@ -32,11 +39,13 @@ public class Server {
 	private static final NioEventLoopGroup serverBossGroup = new NioEventLoopGroup();
 	private static final NioEventLoopGroup serverWorkerGroup = new NioEventLoopGroup();
 	private final ServerBootstrap bootstrap = new ServerBootstrap();
+	private final ObjectMapper objectMapper = new ObjectMapper();
+	
 	public int port = 8089;
 
 	public static void main(String[] args) throws Exception {
-//		Server server = new Server();
-//		server.start();
+		Server server = new Server();
+		server.start();
 	}
 
 	public void start() {
@@ -55,7 +64,6 @@ public class Server {
 				});
 		try {
 			bootstrap.bind(port).sync().channel().closeFuture().sync();
-			;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -63,20 +71,14 @@ public class Server {
 
 	private SimpleChannelInboundHandler<FullHttpRequest> initSimpleChannelInboundHandler() {
 		return new SimpleChannelInboundHandler<FullHttpRequest>() {
-
-			protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws Exception {
-				QueryStringDecoder uriDecoder = new QueryStringDecoder(msg.getUri());
-				System.out.println(uriDecoder.path());
-				System.out.println(uriDecoder.uri());
-				System.out.println(uriDecoder.parameters());
-				System.out.println(uriDecoder);
-//				new HttpServerCodec().
-//				new HttpObjectAggregator(maxContentLength)
-				System.out.println("333333333333333333333333333333333");
-				System.out.println(msg);
-				System.out.println("222222222222222222222222222222");
-				System.out.println(msg.content().toString(CharsetUtil.UTF_8));
+			final String[] filterURL = { "/favicon.ico" };
+			final String REGISTER_API_PATH = "register/api";
+			
+			protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
+				process(ctx, request);
+//				System.out.println(msg.content().toString(CharsetUtil.UTF_8));
 //				logger.debug("channel read message type is {} ", msg.getType());
+
 				// 回复信息给浏览器
 				ByteBuf content = Unpooled.copiedBuffer("hello，我是服务器", CharsetUtil.UTF_8);
 				// 构造http响应
@@ -86,11 +88,30 @@ public class Server {
 				response.headers().set("Content-Type", "text/plain;charset=UTF-8");
 				response.headers().set("Content-Length", content.readableBytes());
 
+				String cookieValue = ServerCookieEncoder.STRICT.encode(HttpSession.getHttpSession(request).getCookie());
+				response.headers().set(HttpHeaderNames.SET_COOKIE, cookieValue);
 				ctx.writeAndFlush(response);
-				System.out.println("22222222222222222");
 			}
 
-			private void handleAuthMessage(ChannelHandlerContext ctx, HttpMessage proxyMessage) {
+			private void process(QueryStringDecoder uriDecoder, FullHttpRequest request) throws Exception {
+				// TODO:系统api的处理和动态添加的pai可设计成责任链，抽象处理api
+				if (REGISTER_API_PATH.equals(uriDecoder.path())) {
+					String body = request.content().toString(CharsetUtil.UTF_8);
+					API api = objectMapper.readValue(body, API.class);
+					
+				}
+			}
+
+			public void process(ChannelHandlerContext ctx, FullHttpRequest request) {
+				QueryStringDecoder uriDecoder = new QueryStringDecoder(request.uri());
+				String path = uriDecoder.path();
+
+				for (String url : filterURL) {
+					if (url.equals(path)) {
+						return;
+					}
+				}
+				process(uriDecoder, request);
 
 			}
 
@@ -106,23 +127,23 @@ public class Server {
 				ctx.close();// 抛出异常，断开与客户端的连接
 			}
 
-//			/**
-//			 * 客户端与服务端第一次建立连接时 执行
-//			 *
-//			 * @param ctx
-//			 * @throws Exception
-//			 */
-//			@Override
-//			public void channelActive(ChannelHandlerContext ctx) throws Exception, IOException {
-//				super.channelActive(ctx);
+			/**
+			 * 客户端与服务端第一次建立连接时 执行
+			 *
+			 * @param ctx
+			 * @throws Exception
+			 */
+			@Override
+			public void channelActive(ChannelHandlerContext ctx) throws Exception, IOException {
+				super.channelActive(ctx);
 //				ctx.channel().read();
-//				InetSocketAddress insocket = (InetSocketAddress) ctx.channel().remoteAddress();
-//				String clientIp = insocket.getAddress().getHostAddress();
+				InetSocketAddress insocket = (InetSocketAddress) ctx.channel().remoteAddress();
+				String clientIp = insocket.getAddress().getHostAddress();
 //				// TODO: 最终这个是客户端key需要去查询当前请求的ip对应的客户端key
 //				String clientKey = "123";
 //				saveToChannelManager(clientKey, ctx.channel());
-//				logger.debug("连接成功 IP: {}", clientIp);
-//			}
+				logger.debug("连接成功 date: {}, IP: {}", LocalDateTime.now(), clientIp);
+			}
 
 			/**
 			 * 客户端与服务端 断连时 执行
@@ -133,7 +154,7 @@ public class Server {
 			@Override
 			public void channelInactive(ChannelHandlerContext ctx) throws Exception, IOException {
 				Channel channel = ctx.channel();
-				logger.debug("连接断开 channel: {}", channel);
+				logger.debug("连接断开 date: {}, channel: {}", LocalDateTime.now(), channel);
 				super.channelInactive(ctx);
 			}
 

@@ -1,4 +1,4 @@
-package com.handy.sql.netty.mapping;
+package com.handy.sql.netty.http.mapping;
 
 import java.util.Arrays;
 import java.util.Objects;
