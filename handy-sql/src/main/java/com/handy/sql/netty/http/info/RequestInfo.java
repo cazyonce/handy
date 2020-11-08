@@ -1,4 +1,4 @@
-package com.handy.sql.netty.http.api;
+package com.handy.sql.netty.http.info;
 
 import java.util.Map;
 

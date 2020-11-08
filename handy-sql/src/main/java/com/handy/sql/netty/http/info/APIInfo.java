@@ -1,11 +1,11 @@
-package com.handy.sql.netty.http.api;
+package com.handy.sql.netty.http.info;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class API {
+public class APIInfo {
 
 	private String name;
 
@@ -13,5 +13,4 @@ public class API {
 
 	private ResponseInfo response;
 
-	private String executeSQL;
 }

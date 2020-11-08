@@ -1,11 +1,12 @@
-package com.handy.sql.netty.http.mapping;
+package com.handy.sql.netty.http.api.mapping;
 
 import java.util.Arrays;
 import java.util.Objects;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.handy.sql.netty.http.api.initializer.Initializer;
 
-public class PathMappingUtil {
+public class PathMappingManager implements Initializer {
 
 	public PathMapping get(PathMapping root, String path) throws Exception {
 		return process(root, path, new Processor() {
@@ -86,7 +87,7 @@ public class PathMappingUtil {
 	}
 
 	public static void main(String[] args) throws Exception {
-		PathMappingUtil mappingUtil = new PathMappingUtil();
+		PathMappingManager mappingUtil = new PathMappingManager();
 		ObjectMapper mapper = new ObjectMapper();
 		PathMapping root = new PathMapping();
 
@@ -133,5 +134,11 @@ public class PathMappingUtil {
 //		System.out.println(isMatch1);
 //		System.out.println(path.replaceAll("^\\{.*\\}$", "*"));
 //		System.out.println(Arrays.toString(path.split("(?=\\/)")));
+	}
+
+	@Override
+	public void init() throws Exception {
+		// TODO Auto-generated method stub
+		
 	}
 }

@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.handy.sql.netty.http.api.API;
+import com.handy.sql.netty.http.info.APIInfo;
 import com.handy.sql.netty.http.session.HttpSession;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
@@ -39,7 +39,7 @@ public class Server {
 	private static final NioEventLoopGroup serverBossGroup = new NioEventLoopGroup();
 	private static final NioEventLoopGroup serverWorkerGroup = new NioEventLoopGroup();
 	private final ServerBootstrap bootstrap = new ServerBootstrap();
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	public static final ObjectMapper objectMapper = new ObjectMapper();
 	
 	public int port = 8089;
 
@@ -55,6 +55,7 @@ public class Server {
 
 					@Override
 					public void initChannel(SocketChannel ch) throws Exception {
+						
 //						 ch.pipeline().addLast(new HttpServerCodec());
 						ch.pipeline().addLast(new HttpRequestDecoder());
 						ch.pipeline().addLast(new HttpObjectAggregator(2048));
@@ -97,7 +98,7 @@ public class Server {
 				// TODO:系统api的处理和动态添加的pai可设计成责任链，抽象处理api
 				if (REGISTER_API_PATH.equals(uriDecoder.path())) {
 					String body = request.content().toString(CharsetUtil.UTF_8);
-					API api = objectMapper.readValue(body, API.class);
+					APIInfo api = objectMapper.readValue(body, APIInfo.class);
 					
 				}
 			}
@@ -111,7 +112,7 @@ public class Server {
 						return;
 					}
 				}
-				process(uriDecoder, request);
+//				process(uriDecoder, request);
 
 			}
 
