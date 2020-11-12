@@ -3,13 +3,7 @@ package com.handy.sql.netty;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.LocalDateTime;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.handy.sql.netty.http.info.APIInfo;
+import com.handy.sql.netty.http.channel.HttpChannelHandler;
 import com.handy.sql.netty.http.session.HttpSession;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
@@ -35,15 +29,13 @@ import io.netty.util.CharsetUtil;
 
 public class Server {
 
-	private Logger logger = LogManager.getLogger(Server.class);
 	private static final NioEventLoopGroup serverBossGroup = new NioEventLoopGroup();
 	private static final NioEventLoopGroup serverWorkerGroup = new NioEventLoopGroup();
 	private final ServerBootstrap bootstrap = new ServerBootstrap();
-	public static final ObjectMapper objectMapper = new ObjectMapper();
-	
 	public int port = 8089;
-
+	
 	public static void main(String[] args) throws Exception {
+		GlobalProvide.PATH_MAPPING_MANAGER.init();
 		Server server = new Server();
 		server.start();
 	}
@@ -55,12 +47,13 @@ public class Server {
 
 					@Override
 					public void initChannel(SocketChannel ch) throws Exception {
-						
+
 //						 ch.pipeline().addLast(new HttpServerCodec());
 						ch.pipeline().addLast(new HttpRequestDecoder());
 						ch.pipeline().addLast(new HttpObjectAggregator(2048));
 						ch.pipeline().addLast(new HttpResponseEncoder());
-						ch.pipeline().addLast(initSimpleChannelInboundHandler());
+						ch.pipeline().addLast(new HttpChannelHandler());
+//						ch.pipeline().addLast(initSimpleChannelInboundHandler());
 					}
 				});
 		try {
@@ -73,10 +66,9 @@ public class Server {
 	private SimpleChannelInboundHandler<FullHttpRequest> initSimpleChannelInboundHandler() {
 		return new SimpleChannelInboundHandler<FullHttpRequest>() {
 			final String[] filterURL = { "/favicon.ico" };
-			final String REGISTER_API_PATH = "register/api";
-			
 			protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
 				process(ctx, request);
+
 //				System.out.println(msg.content().toString(CharsetUtil.UTF_8));
 //				logger.debug("channel read message type is {} ", msg.getType());
 
@@ -92,15 +84,6 @@ public class Server {
 				String cookieValue = ServerCookieEncoder.STRICT.encode(HttpSession.getHttpSession(request).getCookie());
 				response.headers().set(HttpHeaderNames.SET_COOKIE, cookieValue);
 				ctx.writeAndFlush(response);
-			}
-
-			private void process(QueryStringDecoder uriDecoder, FullHttpRequest request) throws Exception {
-				// TODO:系统api的处理和动态添加的pai可设计成责任链，抽象处理api
-				if (REGISTER_API_PATH.equals(uriDecoder.path())) {
-					String body = request.content().toString(CharsetUtil.UTF_8);
-					APIInfo api = objectMapper.readValue(body, APIInfo.class);
-					
-				}
 			}
 
 			public void process(ChannelHandlerContext ctx, FullHttpRequest request) {
@@ -143,7 +126,7 @@ public class Server {
 //				// TODO: 最终这个是客户端key需要去查询当前请求的ip对应的客户端key
 //				String clientKey = "123";
 //				saveToChannelManager(clientKey, ctx.channel());
-				logger.debug("连接成功 date: {}, IP: {}", LocalDateTime.now(), clientIp);
+				System.out.println("连接成功 date: " + LocalDateTime.now() + ", IP: " + clientIp);
 			}
 
 			/**
@@ -155,7 +138,7 @@ public class Server {
 			@Override
 			public void channelInactive(ChannelHandlerContext ctx) throws Exception, IOException {
 				Channel channel = ctx.channel();
-				logger.debug("连接断开 date: {}, channel: {}", LocalDateTime.now(), channel);
+				System.out.println("连接断开 date: " + LocalDateTime.now() + ", channel: " + channel);
 				super.channelInactive(ctx);
 			}
 

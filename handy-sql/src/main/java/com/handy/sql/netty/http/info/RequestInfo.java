@@ -1,17 +1,24 @@
 package com.handy.sql.netty.http.info;
 
+import java.util.HashMap;
 import java.util.Map;
-
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
-@Setter
 public class RequestInfo {
 	
-	private String path;
+	private final String path;
 	
-	private String method;
+	private final String method;
 	
-	private Map<String, String> headers;
+	private final Map<String, String> headers = new HashMap<String, String>();
+	
+	public void addHeader(String key, String value) {
+		headers.put(key, value);
+	}
+
+	public RequestInfo(String path, String method) {
+		this.path = path;
+		this.method = method;
+	}
 }

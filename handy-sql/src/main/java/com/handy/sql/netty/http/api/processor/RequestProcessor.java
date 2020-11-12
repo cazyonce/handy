@@ -4,5 +4,11 @@ import io.netty.handler.codec.http.FullHttpRequest;
 
 public interface RequestProcessor {
 
-	public <T> T processRequest(FullHttpRequest request) throws Exception;
+	public default String processRequestReturnContent(FullHttpRequest request) throws Exception{
+		return "";
+	}
+
+	public default void processRequestNoResponseContent(FullHttpRequest request) throws Exception {
+
+	}
 }
