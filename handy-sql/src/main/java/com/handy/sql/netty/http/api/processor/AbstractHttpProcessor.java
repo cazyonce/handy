@@ -1,5 +1,6 @@
 package com.handy.sql.netty.http.api.processor;
 
+import com.handy.sql.netty.exception.CustomException;
 import com.handy.sql.netty.http.info.APIInfo;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -13,26 +14,31 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.util.CharsetUtil;
 import lombok.Getter;
+import lombok.Setter;
 
+/**
+ * 
+ */
 public abstract class AbstractHttpProcessor implements RequestProcessor, ResponseProcessor {
 
+	/**
+	 * 这个属性是单例的，每次处理新的请求时，使用是注册处理器时的对象，而不是副本
+	 */
 	@Getter
-	protected final APIInfo apiInfo;
-
-	public AbstractHttpProcessor(APIInfo apiInfo) {
-		this.apiInfo = apiInfo;
-	}
+	@Setter
+	protected APIInfo apiInfo;
 
 	public String getPath() {
 		return apiInfo.getMapping().getPath();
 	}
-	
+
 	public HttpMethod getMethod() {
 		return apiInfo.getMapping().getMethod();
 	}
 
-	public HttpResponse process(FullHttpRequest request) throws Exception {
-		HttpHeaders responseHeaders = apiInfo.getResponseHeaders();
+	public HttpResponse process(FullHttpRequest request) throws CustomException {
+		HttpHeaders responseHeaders = apiInfo.getResponseHeaders().copy();
+
 		// 如果没有设置content type 默认为 text/plain
 		if (!responseHeaders.contains(HttpHeaderNames.CONTENT_TYPE)) {
 			responseHeaders.add(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN);
@@ -55,7 +61,14 @@ public abstract class AbstractHttpProcessor implements RequestProcessor, Respons
 	}
 
 	@Override
-	public void processResponse(Object body) throws Exception {
+	public void processResponse(Object body) throws CustomException {
 
 	}
+
+	/**
+	 * 通过com.handy.sql.netty.http.api.mapping.APIProcessorMappingManager调用这个方法创建的对象以单例的方式使用，所有不考虑其它地方的使用，可以不需要实现单例模式
+	 * 
+	 * @return
+	 */
+	public abstract APIInfo newAPIInfoInstance();
 }

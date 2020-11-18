@@ -2,17 +2,20 @@ package com.handy.sql.netty.http.api.processor.system;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.handy.sql.netty.GlobalProvide;
 import com.handy.sql.netty.exception.CustomException;
 import com.handy.sql.netty.http.api.consts.APIMappingConst;
 import com.handy.sql.netty.http.api.consts.SystemDatabaseTableName;
+import com.handy.sql.netty.http.api.entity.APIMappingEntity;
+import com.handy.sql.netty.http.api.entity.APIMappingHeaderEntity;
+import com.handy.sql.netty.http.api.enums.APIStatus;
 import com.handy.sql.netty.http.api.enums.HttHeaderType;
 import com.handy.sql.netty.http.api.processor.AbstractHttpProcessor;
+import com.handy.sql.netty.http.api.processor.dynamic.GetSQLDynamicProcessor;
 import com.handy.sql.netty.http.info.APIInfo;
 import com.handy.sql.netty.http.info.SQLAPIInfo;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
@@ -20,19 +23,19 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.util.CharsetUtil;
 
 public class PostRegisterAPIProcessor extends AbstractHttpProcessor {
 
-	private PostRegisterAPIProcessor(APIInfo apiInfo) {
-		super(apiInfo);
-	}
-
-	public static AbstractHttpProcessor newInstance() {
-		APIInfo info = new APIInfo(APIMappingConst.SYTEM_REGISTER_API_POST, HttpResponseStatus.OK);
+	@Override
+	public APIInfo newAPIInfoInstance() {
+		APIInfo info = new APIInfo(APIMappingConst.SYTEM_REGISTER_API_POST, HttpResponseStatus.OK,
+				PostRegisterAPIProcessor.class);
 		info.setName("注册SQL API ");
 		info.setResponseContent(false);
+		info.setStatus(APIStatus.ENABLED);
 
 		DefaultHttpHeaders requestHeaders = new DefaultHttpHeaders();
 		requestHeaders.add(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
@@ -42,23 +45,26 @@ public class PostRegisterAPIProcessor extends AbstractHttpProcessor {
 		DefaultHttpHeaders responseHeaders = new DefaultHttpHeaders();
 		responseHeaders.add(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN);
 		info.setResponseHeaders(responseHeaders);
-		return new PostRegisterAPIProcessor(info);
+		return info;
 	}
 
 	@Override
-	public void processRequestNoResponseContent(FullHttpRequest request) throws Exception {
-		
-		SQLAPIInfo info = GlobalProvide.OBJECT_MAPPER.readValue(request.content().toString(CharsetUtil.UTF_8),
-				SQLAPIInfo.class);
-		
-		System.out.println(GlobalProvide.OBJECT_MAPPER.writeValueAsString(info));
-		
-		NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(
-				GlobalProvide.JDBC_TEMPLATE.getDataSource());
-		GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
-		
+	public void processRequestNoResponseContent(FullHttpRequest request) throws CustomException {
+
+		SQLAPIInfo insertAPIInfo;
 		try {
-			int row = insertApiInfo(info, keyHolder, template);
+			insertAPIInfo = GlobalProvide.OBJECT_MAPPER.readValue(request.content().toString(CharsetUtil.UTF_8),
+					SQLAPIInfo.class);
+		} catch (JsonProcessingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			throw new CustomException("数据错误");
+		}
+
+		GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
+
+		try {
+			int row = insertApiInfo(insertAPIInfo, keyHolder);
 			if (row < 1) {
 				// TODO: 记录错误日志
 				throw new CustomException("add api mapping data failed, row: " + row);
@@ -72,12 +78,11 @@ public class PostRegisterAPIProcessor extends AbstractHttpProcessor {
 			// TODO: 记录错误日志
 			throw new CustomException("add api error > " + e.getCause().getMessage());
 		}
-		
+
 		final int apiMappingId = keyHolder.getKey().intValue();
-		System.out.println(apiMappingId);
 
 		try {
-			batchInsertHeaders(apiMappingId, apiInfo.getRequestHeaders(), HttHeaderType.REQUEST, template);
+			batchInsertHeaders(apiMappingId, apiInfo.getRequestHeaders(), HttHeaderType.REQUEST);
 		} catch (Exception e) {
 			e.printStackTrace();
 			// TODO: 记录错误日志
@@ -85,13 +90,17 @@ public class PostRegisterAPIProcessor extends AbstractHttpProcessor {
 		}
 
 		try {
-			batchInsertHeaders(apiMappingId, apiInfo.getResponseHeaders(), HttHeaderType.RESPONSE, template);
+			batchInsertHeaders(apiMappingId, apiInfo.getResponseHeaders(), HttHeaderType.RESPONSE);
 		} catch (Exception e) {
 			e.printStackTrace();
 			// TODO: 记录错误日志
 			throw new CustomException("add http response headers error > " + e.getCause().getMessage());
 		}
-
+//		System.out.println(GlobalProvide.OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(info));
+		if (HttpMethod.GET.name().equals(insertAPIInfo.getMapping().getMethod().name())) {
+			insertAPIInfo.setExecuteProcessorClass(GetSQLDynamicProcessor.class);
+			GlobalProvide.PATH_MAPPING_MANAGER.register(insertAPIInfo);
+		}
 //		template.update(new PreparedStatementCreator() {
 //			
 //			@Override
@@ -105,16 +114,16 @@ public class PostRegisterAPIProcessor extends AbstractHttpProcessor {
 		System.out.println("执行注册api完成");
 	}
 
-	private int insertApiInfo(SQLAPIInfo info, GeneratedKeyHolder keyHolder, NamedParameterJdbcTemplate template) {
+	private int insertApiInfo(SQLAPIInfo info, GeneratedKeyHolder keyHolder) {
 
 		String sql = "insert into " + SystemDatabaseTableName.API_MAPPING
-				+ " (`path`, `name`, `method`, `describe`, `create_time`) values(:path, :name, :method, :describe, now())";
-		MapSqlParameterSource parameters = new MapSqlParameterSource();
-		parameters.addValue("path", info.getMapping().getPath());
-		parameters.addValue("method", info.getMapping().getMethod().name());
-		parameters.addValue("name", info.getName());
-		parameters.addValue("describe", info.getDescribe() == null ? "" : info.getDescribe());
-		return template.update(sql, parameters, keyHolder);
+				+ " (`path`, `name`, `method`, `describe`, `create_time`, `status`, `response_code`) values(:path, :name, :method, :describe, now(), :status, :response_code)";
+
+		APIMappingEntity apiEntity = new APIMappingEntity(info.getMapping().getPath(),
+				info.getMapping().getMethod().name(), info.getName(),
+				info.getDescribe() == null ? "" : info.getDescribe(), info.getResponseStatus().code(),
+				info.getStatus().STATUS);
+		return GlobalProvide.JDBC_TEMPLATE.updateExt(sql, apiEntity, keyHolder);
 	}
 
 	/**
@@ -126,45 +135,26 @@ public class PostRegisterAPIProcessor extends AbstractHttpProcessor {
 	 * @param template
 	 * @throws CustomException
 	 */
-	private void batchInsertHeaders(int apiMappingId, HttpHeaders headers, HttHeaderType type,
-			NamedParameterJdbcTemplate template) throws CustomException {
+	private void batchInsertHeaders(int apiMappingId, HttpHeaders headers, HttHeaderType type) throws CustomException {
 
 		if (headers == null || headers.isEmpty()) {
 			return;
 		}
 
-		List<MapSqlParameterSource> parameterList = new ArrayList<MapSqlParameterSource>();
+		ArrayList<APIMappingHeaderEntity> parameterList = new ArrayList<APIMappingHeaderEntity>();
 		Iterator<Entry<String, String>> iterator = headers.iteratorAsString();
 		Entry<String, String> entry = iterator.next();
 		String sql = "insert into " + SystemDatabaseTableName.API_MAPPING_HEADER
 				+ " (`api_mapping_id`, `name`, `value`, `header_type`) values(:api_mapping_id, :name, :value, :header_type)";
-		parameterList.add(batchInsertHeadersParametersPrepared(apiMappingId, entry, type));
+		parameterList.add(new APIMappingHeaderEntity(apiMappingId, entry.getKey(), entry.getValue(), type.name()));
 
 		while (iterator.hasNext()) {
 			entry = iterator.next();
-			parameterList.add(batchInsertHeadersParametersPrepared(apiMappingId, entry, type));
+			parameterList.add(new APIMappingHeaderEntity(apiMappingId, entry.getKey(), entry.getValue(), type.name()));
 		}
 
-		template.batchUpdate(sql, parameterList.toArray(new MapSqlParameterSource[parameterList.size()]));
+		GlobalProvide.JDBC_TEMPLATE.batchUpdateExt(sql, parameterList);
 
 	}
 
-	/**
-	 * 预定义批量插入Http header sql参数
-	 * 
-	 * @param apiMappingId
-	 * @param header
-	 * @param type
-	 * @return
-	 */
-	private MapSqlParameterSource batchInsertHeadersParametersPrepared(int apiMappingId, Entry<String, String> header,
-			HttHeaderType type) {
-
-		MapSqlParameterSource parameters = new MapSqlParameterSource();
-		parameters.addValue("api_mapping_id", apiMappingId);
-		parameters.addValue("name", header.getKey());
-		parameters.addValue("value", header.getKey());
-		parameters.addValue("header_type", type.name());
-		return parameters;
-	}
 }

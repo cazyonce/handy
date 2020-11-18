@@ -1,8 +1,13 @@
 package com.handy.sql.netty.http.info;
 
+import java.util.ArrayList;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.handy.sql.netty.http.api.enums.APIStatus;
 import com.handy.sql.netty.http.api.mapping.APIMapping;
+import com.handy.sql.netty.http.api.processor.AbstractHttpProcessor;
 import com.handy.sql.netty.jackon.converter.HttpHeadersConverter;
 import com.handy.sql.netty.jackon.converter.HttpResponseStatusConverter;
 import com.handy.sql.netty.jackon.serializer.HttpHeadersSerializer;
@@ -19,10 +24,17 @@ import lombok.Setter;
 public class APIInfo {
 
 	protected String name;
-	
+
 	protected String describe;
 
+	protected APIStatus status;
+
 	protected APIMapping mapping;
+
+	/**
+	 * 数组存储的path变量的顺序与实际的一致
+	 */
+	protected ArrayList<String> pathVariableNames;
 
 	@JsonSerialize(using = HttpHeadersSerializer.class)
 	@JsonDeserialize(converter = HttpHeadersConverter.class)
@@ -39,8 +51,13 @@ public class APIInfo {
 	@JsonDeserialize(converter = HttpResponseStatusConverter.class)
 	protected HttpResponseStatus responseStatus;
 
-	public APIInfo(APIMapping mapping, HttpResponseStatus responseStatus) {
+//	@JsonIgnore
+	protected Class<? extends AbstractHttpProcessor> executeProcessorClass;
+
+	public APIInfo(APIMapping mapping, HttpResponseStatus responseStatus,
+			Class<? extends AbstractHttpProcessor> executeProcessorClass) {
 		this.mapping = mapping;
 		this.responseStatus = responseStatus;
+		this.executeProcessorClass = executeProcessorClass;
 	}
 }
