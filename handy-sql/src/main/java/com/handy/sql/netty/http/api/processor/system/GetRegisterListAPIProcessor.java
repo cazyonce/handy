@@ -16,7 +16,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 public class GetRegisterListAPIProcessor extends AbstractHttpProcessor {
 
 	@Override
-	public String processRequestReturnContent(FullHttpRequest request) throws CustomException {
+	public String processRequest(FullHttpRequest request) throws CustomException {
+		
 		try {
 			return GlobalProvide.OBJECT_MAPPER.writeValueAsString(GlobalProvide.PATH_MAPPING_MANAGER.getAPIInfoList());
 		} catch (JsonProcessingException e) {
@@ -31,7 +32,6 @@ public class GetRegisterListAPIProcessor extends AbstractHttpProcessor {
 		APIInfo info = new APIInfo(APIMappingConst.SYTEM_REGISTER_API_GET, HttpResponseStatus.OK,
 				GetRegisterListAPIProcessor.class);
 		info.setName("查询API列表");
-		info.setResponseContent(true);
 		info.setStatus(APIStatus.ENABLED);
 
 		DefaultHttpHeaders requestHeaders = new DefaultHttpHeaders();

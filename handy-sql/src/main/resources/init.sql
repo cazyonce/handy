@@ -7,10 +7,12 @@ CREATE TABLE `api_mapping` (
   `name` varchar(100) NOT NULL DEFAULT '',
   `describe` varchar(255) NOT NULL DEFAULT '',
   `response_code` int(11) NOT NULL,
+  `response_reason` varchar(150) NOT NULL DEFAULT '',
   `status` tinyint(4) NOT NULL DEFAULT '0' COMMENT '0（禁用）|1（启用）',
+  `execute_sql` varchar(255) DEFAULT NULL,
   `create_time` datetime NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `api_mapping_header` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -19,4 +21,4 @@ CREATE TABLE `api_mapping_header` (
   `value` varchar(255) NOT NULL DEFAULT '',
   `header_type` varchar(10) NOT NULL COMMENT 'REUQEST|RESPONSE',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=57 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;

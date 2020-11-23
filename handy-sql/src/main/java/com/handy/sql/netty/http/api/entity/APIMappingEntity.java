@@ -22,18 +22,24 @@ public class APIMappingEntity {
 
 	private Integer responseCode;
 
+	private String responseReason;
+
 	private Integer status;
+
+	private String executeSQL;
 
 	private LocalDateTime createTime;
 
 	public APIMappingEntity(String path, String method, String name, String describe, Integer responseCode,
-			Integer status) {
+			Integer status, String executeSQL, String responseReason) {
 		this.path = path;
 		this.method = method;
 		this.name = name;
 		this.describe = describe;
 		this.responseCode = responseCode;
 		this.status = status;
+		this.executeSQL = executeSQL;
+		this.responseReason = responseReason;
 	}
 
 }

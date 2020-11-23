@@ -1,8 +1,6 @@
 package com.handy.sql.netty.http.info;
 
 import java.util.ArrayList;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.handy.sql.netty.http.api.enums.APIStatus;
@@ -43,9 +41,6 @@ public class APIInfo {
 	@JsonDeserialize(converter = HttpHeadersConverter.class)
 	@JsonSerialize(using = HttpHeadersSerializer.class)
 	protected HttpHeaders responseHeaders;
-
-	/** 是否需要返回内容 **/
-	protected boolean responseContent;
 
 	@JsonSerialize(using = HttpResponseStatusSerializer.class)
 	@JsonDeserialize(converter = HttpResponseStatusConverter.class)

@@ -6,11 +6,7 @@ import io.netty.handler.codec.http.FullHttpRequest;
 
 public interface RequestProcessor {
 
-	public default String processRequestReturnContent(FullHttpRequest request) throws CustomException {
-		return "";
-	}
-
-	public default void processRequestNoResponseContent(FullHttpRequest request) throws CustomException {
-
+	public default <T> T processRequest(FullHttpRequest request) throws CustomException {
+		return null;
 	}
 }

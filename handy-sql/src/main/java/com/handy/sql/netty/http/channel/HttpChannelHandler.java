@@ -14,7 +14,12 @@ public class HttpChannelHandler extends SimpleChannelInboundHandler<FullHttpRequ
 	protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
 
 		QueryStringDecoder uriDecoder = new QueryStringDecoder(request.uri());
-
+		System.out.println("uriDecoder: " + uriDecoder);
+		System.out.println("rawQuery: " + uriDecoder.rawQuery());
+		System.out.println("rawPath: " + uriDecoder.rawPath());
+		System.out.println("parameters class: " + uriDecoder.parameters().getClass());
+		System.out.println("parameters: " + uriDecoder.parameters());
+		System.out.println("uri: " + uriDecoder.uri());
 		// 暂时对未知的url过滤
 		if (filterPath(uriDecoder.path())) {
 			return;

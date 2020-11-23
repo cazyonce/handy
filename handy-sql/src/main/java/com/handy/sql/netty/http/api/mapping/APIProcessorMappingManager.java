@@ -1,29 +1,28 @@
 package com.handy.sql.netty.http.api.mapping;
 
-import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
-
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-
-import com.handy.sql.netty.GlobalProvide;
 import com.handy.sql.netty.exception.CustomException;
+import com.handy.sql.netty.http.api.entity.APIMappingEntity;
+import com.handy.sql.netty.http.api.enums.APIStatus;
+import com.handy.sql.netty.http.api.enums.HttHeaderType;
 import com.handy.sql.netty.http.api.initializer.Initializer;
 import com.handy.sql.netty.http.api.processor.AbstractHttpProcessor;
-import com.handy.sql.netty.http.api.processor.dynamic.GetSQLDynamicProcessor;
+import com.handy.sql.netty.http.api.processor.dynamic.adapter.HttpProcessAdapter;
 import com.handy.sql.netty.http.api.processor.system.GetRegisterListAPIProcessor;
 import com.handy.sql.netty.http.api.processor.system.PostRegisterAPIProcessor;
 import com.handy.sql.netty.http.info.APIInfo;
 import com.handy.sql.netty.http.info.SQLAPIInfo;
-
+import com.handy.sql.netty.jdbc.dao.APIMappingDao;
+import com.handy.sql.netty.jdbc.dao.APIMappingHeaderDao;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 public final class APIProcessorMappingManager implements Initializer {
 
@@ -102,23 +101,31 @@ public final class APIProcessorMappingManager implements Initializer {
 			AbstractHttpProcessor processor = (AbstractHttpProcessor) obj;
 			register(processor.newAPIInfoInstance());
 		}
-		
-//		TODO: 处理数据库的初始化
-//		List<Map<String, Object>> aa = GlobalProvide.JDBC_TEMPLATE.queryForList("select `path`, `method`, `name`, `describe`, `response_code`, `status` from api_mapping", new  MapSqlParameterSource());
-//		SQLAPIInfo[] ss;
-//		try {
-//			ss = GlobalProvide.DB_OBJECT_MAPPER.readValue(GlobalProvide.DB_OBJECT_MAPPER.writeValueAsBytes(aa), SQLAPIInfo[].class);
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//			throw new CustomException(e.getMessage());
-//		}
-//		for (SQLAPIInfo info : ss) {
-//			if (HttpMethod.GET.name().equals(info.getMapping().getMethod().name())) {
-//				info.setExecuteProcessorClass(GetSQLDynamicProcessor.class);
-//			}
-//			register(info);
-//		}
+
+		for (APIMappingEntity info : APIMappingDao.queryList()) {
+			SQLAPIInfo sqlAPIInfo = new SQLAPIInfo();
+			sqlAPIInfo.setName(info.getName());
+			sqlAPIInfo.setExecuteSQL(info.getExecuteSQL());
+			sqlAPIInfo.setDescribe(info.getDescribe());
+			sqlAPIInfo.setResponseStatus(new HttpResponseStatus(info.getResponseCode(), info.getResponseReason()));
+			sqlAPIInfo.setStatus(APIStatus.valueOf(info.getStatus()));
+			sqlAPIInfo.setMapping(new APIMapping(HttpMethod.valueOf(info.getMethod()), info.getPath()));
+			sqlAPIInfo.setRequestHeaders(selectHttpHeaders(info.getId(), HttHeaderType.REQUEST));
+			sqlAPIInfo.setResponseHeaders(selectHttpHeaders(info.getId(), HttHeaderType.RESPONSE));
+
+			sqlAPIInfo.setExecuteProcessorClass(
+					HttpProcessAdapter.get(HttpMethod.valueOf(sqlAPIInfo.getMapping().getMethod().name())));
+			register(sqlAPIInfo);
+		}
+	}
+
+	private HttpHeaders selectHttpHeaders(int apiMappingId, HttHeaderType type) {
+		DefaultHttpHeaders httpHeaders = new DefaultHttpHeaders();
+		List<HttpHeaders> selectedHeaders = APIMappingHeaderDao.queryListToHttpHeaders(apiMappingId, type.toString());
+		for (HttpHeaders select : selectedHeaders) {
+			httpHeaders.add(select);
+		}
+		return httpHeaders;
 	}
 
 	private PathMapping getPathMapping(String path) throws CustomException {

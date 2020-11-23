@@ -3,7 +3,14 @@ package com.handy.sql.netty;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+
+import com.handy.sql.netty.exception.CustomException;
+import com.handy.sql.netty.http.channel.ExceptionHandler;
 import com.handy.sql.netty.http.channel.HttpChannelHandler;
 import com.handy.sql.netty.http.session.HttpSession;
 
@@ -35,7 +42,7 @@ public class Server {
 	private static final NioEventLoopGroup serverWorkerGroup = new NioEventLoopGroup();
 	private final ServerBootstrap bootstrap = new ServerBootstrap();
 	public int port = 8089;
-	
+
 	public static void main(String[] args) throws Exception {
 		GlobalProvide.PATH_MAPPING_MANAGER.init();
 		Server server = new Server();
@@ -68,6 +75,7 @@ public class Server {
 	private SimpleChannelInboundHandler<FullHttpRequest> initSimpleChannelInboundHandler() {
 		return new SimpleChannelInboundHandler<FullHttpRequest>() {
 			final String[] filterURL = { "/favicon.ico" };
+
 			protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
 				process(ctx, request);
 
