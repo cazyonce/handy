@@ -1,4 +1,4 @@
-package com.handy.sql.netty.http.api.processor.system;
+package com.handy.sql.netty.http.api.processor.system.register;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.handy.sql.netty.GlobalProvide;

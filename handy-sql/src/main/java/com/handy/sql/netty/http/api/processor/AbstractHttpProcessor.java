@@ -1,5 +1,7 @@
 package com.handy.sql.netty.http.api.processor;
 
+import org.springframework.dao.InvalidDataAccessApiUsageException;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.handy.sql.netty.GlobalProvide;
 import com.handy.sql.netty.exception.CustomException;
@@ -57,6 +59,7 @@ public abstract class AbstractHttpProcessor implements RequestProcessor, Respons
 			String data;
 			if (rawData != null) {
 				System.out.println(rawData);
+				System.out.println("11111111");
 				data = GlobalProvide.OBJECT_MAPPER
 						.writeValueAsString(new ResponseContentData<Object>(ResponseCode.SUCCESS, rawData));
 			} else {
@@ -76,7 +79,7 @@ public abstract class AbstractHttpProcessor implements RequestProcessor, Respons
 		} catch (Exception e) {
 			// TODO: 记录日志
 			HttpHeaders responseHeaders = new DefaultHttpHeaders();
-			if (e instanceof CustomException) {
+			if (e instanceof CustomException || e instanceof InvalidDataAccessApiUsageException) {
 				String data;
 				try {
 					data = GlobalProvide.OBJECT_MAPPER
@@ -94,8 +97,8 @@ public abstract class AbstractHttpProcessor implements RequestProcessor, Respons
 				responseHeaders.add(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes());
 				return new DefaultFullHttpResponse(request.protocolVersion(), apiInfo.getResponseStatus(), content,
 						responseHeaders, new DefaultHttpHeaders(false));
-
 			}
+			
 			e.printStackTrace();
 			DefaultFullHttpResponse response = new DefaultFullHttpResponse(request.protocolVersion(),
 					HttpResponseStatus.EXPECTATION_FAILED);

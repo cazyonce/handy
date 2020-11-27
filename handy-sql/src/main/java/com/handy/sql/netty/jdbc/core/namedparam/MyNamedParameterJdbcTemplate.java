@@ -20,6 +20,12 @@ public class MyNamedParameterJdbcTemplate extends NamedParameterJdbcTemplate {
 				MapSqlParameterSourcePOJO.class);
 		return super.update(sql, parameters, generatedKeyHolder);
 	}
+	
+	public int updateExt(String sql, Object obj) throws DataAccessException {
+		MapSqlParameterSource parameters = GlobalProvide.DB_OBJECT_MAPPER.convertValue(obj,
+				MapSqlParameterSourcePOJO.class);
+		return super.update(sql, parameters);
+	}
 
 	public <T> int[] batchUpdateExt(String sql, ArrayList<T> batchArgs) {
 		if (batchArgs.isEmpty()) {

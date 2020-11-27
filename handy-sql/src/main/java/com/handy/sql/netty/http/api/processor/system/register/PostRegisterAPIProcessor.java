@@ -1,4 +1,4 @@
-package com.handy.sql.netty.http.api.processor.system;
+package com.handy.sql.netty.http.api.processor.system.register;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -9,7 +9,7 @@ import com.handy.sql.netty.GlobalProvide;
 import com.handy.sql.netty.exception.CustomException;
 import com.handy.sql.netty.http.api.consts.APIMappingConst;
 import com.handy.sql.netty.http.api.consts.SystemDatabaseTableName;
-import com.handy.sql.netty.http.api.entity.APIMappingHeaderEntity;
+import com.handy.sql.netty.http.api.entity.APIHeaderEntity;
 import com.handy.sql.netty.http.api.enums.APIStatus;
 import com.handy.sql.netty.http.api.enums.HttHeaderType;
 import com.handy.sql.netty.http.api.processor.AbstractHttpProcessor;
@@ -98,11 +98,9 @@ public class PostRegisterAPIProcessor extends AbstractHttpProcessor {
 				throw new CustomException("add http response headers error > " + e.getCause().getMessage());
 			}
 
-			insertAPIInfo.setExecuteProcessorClass(
-					HttpProcessAdapter.get(HttpMethod.valueOf(insertAPIInfo.getMapping().getMethod().name())));
+			insertAPIInfo.setExecuteProcessorClass(HttpProcessAdapter.adaptive(
+					HttpMethod.valueOf(insertAPIInfo.getMapping().getMethod().name()), apiInfo.getRequestHeaders()));
 			GlobalProvide.PATH_MAPPING_MANAGER.register(insertAPIInfo);
-
-			System.out.println("执行注册api完成");
 			ts.commit();
 			return null;
 		} catch (Exception e) {
@@ -128,16 +126,16 @@ public class PostRegisterAPIProcessor extends AbstractHttpProcessor {
 			return;
 		}
 
-		ArrayList<APIMappingHeaderEntity> parameterList = new ArrayList<APIMappingHeaderEntity>();
+		ArrayList<APIHeaderEntity> parameterList = new ArrayList<APIHeaderEntity>();
 		Iterator<Entry<String, String>> iterator = headers.iteratorAsString();
 		Entry<String, String> entry = iterator.next();
-		String sql = "insert into " + SystemDatabaseTableName.API_MAPPING_HEADER
+		String sql = "insert into " + SystemDatabaseTableName.API_HEADER
 				+ " (`api_mapping_id`, `name`, `value`, `header_type`) values(:api_mapping_id, :name, :value, :header_type)";
-		parameterList.add(new APIMappingHeaderEntity(apiMappingId, entry.getKey(), entry.getValue(), type.name()));
+		parameterList.add(new APIHeaderEntity(apiMappingId, entry.getKey(), entry.getValue(), type.name()));
 
 		while (iterator.hasNext()) {
 			entry = iterator.next();
-			parameterList.add(new APIMappingHeaderEntity(apiMappingId, entry.getKey(), entry.getValue(), type.name()));
+			parameterList.add(new APIHeaderEntity(apiMappingId, entry.getKey(), entry.getValue(), type.name()));
 		}
 
 		GlobalProvide.JDBC_TEMPLATE.batchUpdateExt(sql, parameterList);

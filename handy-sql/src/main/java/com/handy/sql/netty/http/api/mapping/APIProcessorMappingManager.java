@@ -13,8 +13,11 @@ import com.handy.sql.netty.http.api.enums.HttHeaderType;
 import com.handy.sql.netty.http.api.initializer.Initializer;
 import com.handy.sql.netty.http.api.processor.AbstractHttpProcessor;
 import com.handy.sql.netty.http.api.processor.dynamic.adapter.HttpProcessAdapter;
-import com.handy.sql.netty.http.api.processor.system.GetRegisterListAPIProcessor;
-import com.handy.sql.netty.http.api.processor.system.PostRegisterAPIProcessor;
+import com.handy.sql.netty.http.api.processor.system.api.header.HeaderNameOptionsAPIProcessor;
+import com.handy.sql.netty.http.api.processor.system.api.header.HeaderValueOptionsAPIProcessor;
+import com.handy.sql.netty.http.api.processor.system.api.mapping.GetListAPIProcessor;
+import com.handy.sql.netty.http.api.processor.system.register.GetRegisterListAPIProcessor;
+import com.handy.sql.netty.http.api.processor.system.register.PostRegisterAPIProcessor;
 import com.handy.sql.netty.http.info.APIInfo;
 import com.handy.sql.netty.http.info.SQLAPIInfo;
 import com.handy.sql.netty.jdbc.dao.APIMappingDao;
@@ -28,7 +31,8 @@ public final class APIProcessorMappingManager implements Initializer {
 
 	private final static PathMappingComparator PATH_MAPPING_COMPARARTOR = new PathMappingComparator();
 
-	Class<?>[] SYSTEM_PROCESSOR = { PostRegisterAPIProcessor.class, GetRegisterListAPIProcessor.class };
+	Class<?>[] SYSTEM_PROCESSOR = { PostRegisterAPIProcessor.class, GetRegisterListAPIProcessor.class,
+			GetListAPIProcessor.class, HeaderValueOptionsAPIProcessor.class, HeaderNameOptionsAPIProcessor.class };
 
 	public final PathMapping root = new PathMapping(PATH_MAPPING_COMPARARTOR);
 
@@ -113,8 +117,8 @@ public final class APIProcessorMappingManager implements Initializer {
 			sqlAPIInfo.setRequestHeaders(selectHttpHeaders(info.getId(), HttHeaderType.REQUEST));
 			sqlAPIInfo.setResponseHeaders(selectHttpHeaders(info.getId(), HttHeaderType.RESPONSE));
 
-			sqlAPIInfo.setExecuteProcessorClass(
-					HttpProcessAdapter.get(HttpMethod.valueOf(sqlAPIInfo.getMapping().getMethod().name())));
+			sqlAPIInfo.setExecuteProcessorClass(HttpProcessAdapter.adaptive(
+					HttpMethod.valueOf(sqlAPIInfo.getMapping().getMethod().name()), sqlAPIInfo.getRequestHeaders()));
 			register(sqlAPIInfo);
 		}
 	}

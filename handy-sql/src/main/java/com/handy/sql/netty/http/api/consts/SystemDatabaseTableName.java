@@ -4,5 +4,5 @@ public interface SystemDatabaseTableName {
 
 	String API_MAPPING = "api_mapping";
 
-	String API_MAPPING_HEADER = "api_mapping_header";
+	String API_HEADER = "api_header";
 }

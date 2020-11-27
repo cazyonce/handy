@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class APIMappingHeaderEntity {
+public class APIHeaderEntity {
 
 	private Integer id;
 
@@ -19,7 +19,7 @@ public class APIMappingHeaderEntity {
 
 	private String headerType;
 
-	public APIMappingHeaderEntity(Integer apiMappingId, String name, String value, String headerType) {
+	public APIHeaderEntity(Integer apiMappingId, String name, String value, String headerType) {
 		this.apiMappingId = apiMappingId;
 		this.name = name;
 		this.value = value;

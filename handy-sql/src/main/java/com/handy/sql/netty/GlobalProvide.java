@@ -20,6 +20,8 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
 import com.handy.sql.converter.SQLConverter;
 import com.handy.sql.netty.http.api.mapping.APIProcessorMappingManager;
+import com.handy.sql.netty.http.api.processor.dynamic.adapter.post.PostProcessAdapter;
+import com.handy.sql.netty.http.api.processor.dynamic.post.JSONProcessor;
 import com.handy.sql.netty.jackson.DBObjectMapper;
 import com.handy.sql.netty.jdbc.core.namedparam.MyNamedParameterJdbcTemplate;
 
@@ -37,6 +39,8 @@ public final class GlobalProvide {
 
 	public final static SQLConverter SELECT_SQL_CONVERTER = new SQLConverter();
 
+	public final static PostProcessAdapter POST_PROCESS_ADAPTER = new PostProcessAdapter();
+	
 	static {
 		DriverManagerDataSource dataSource = new DriverManagerDataSource(
 				"jdbc:mysql://localhost:3306/handy?characterEncoding=utf8&useSSL=false&serverTimezone=UTC&rewriteBatchedStatements=true",
@@ -62,6 +66,8 @@ public final class GlobalProvide {
 
 		DB_OBJECT_MAPPER.registerModule(javaTimeModule);
 		DB_OBJECT_MAPPER.setDefaultPropertyInclusion(Include.NON_NULL);
+		
+		POST_PROCESS_ADAPTER.add(new JSONProcessor());
 
 	}
 }
